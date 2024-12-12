@@ -1,0 +1,288 @@
+create database colegio_alienigena;
+use colegio_alienigena;
+
+-- tabala onde vai ficar as informaçoes do professor
+-- drop database bancodedados;
+create table professores (
+    ID_Prof int primary key,
+    nome varchar(50),
+    especialidade varchar(50),
+    Email varchar (30),
+    Telefone varchar (15)
+);
+
+-- Tabela onde há infos sobre a disciplina
+create table disciplinas(
+idDisc varchar (6) primary key,
+Nome_disc varchar (30),
+Carga_Horaria int,
+Prof_responsavel int,
+foreign key (Prof_Responsavel) references professores (ID_Prof)
+);
+
+-- Tabela onde há infos sobre as salas
+create table salas (
+    ID_Sala int primary key auto_increment,
+    Nome_da_sala varchar(50) unique,
+    Capacidade int,
+    Localizacao varchar (50),
+	Recursos_disp varchar (50)
+);
+
+
+create table dispon_prof (
+    ID_Disp_Prof INT AUTO_INCREMENT PRIMARY KEY,
+    ID_Prof INT,
+    dia_semana VARCHAR(15),
+    hora_inicio TIME,
+    hora_fim TIME,
+    FOREIGN KEY (ID_Prof) REFERENCES professores(ID_Prof)
+);
+
+-- Essa tabela é para visualizar os horários de aulas/informações sobre a aula
+create table horario_aulas (
+    ID_Prof int,
+    idDisc_FK varchar (6),
+    dia_semana varchar(15),
+    hora_inicio time,
+    hora_fim time,
+    Sala_FK int,
+    foreign key (ID_Prof) references professores(ID_Prof),
+    foreign key (idDisc_FK) references disciplinas(idDisc),
+    foreign key (Sala_FK) references salas (ID_Sala),
+    unique (ID_Prof, dia_semana, hora_inicio, hora_fim)
+    );
+
+insert into professores (ID_Prof, nome, especialidade, Email, Telefone)
+values 	(001, 'Cleito Rasta', 'Matemática', 'RastaFaries@gmail.com', '(71) 99864-1539'),
+		(002, 'Lucas Macedo', 'História', 'Lucas@gmail.com', '(71) 99887-0245'),
+		(003, 'Millena Quadros', 'Física', 'MIllenaQ@gmail.com', '(71) 98754-6874'),
+		(004, 'Isabela Lima', 'Português', 'Isa@gmail.com', '(71) 98752-7548'),
+		(005, 'Celso Barreto', 'Banco de Dados', 'celso@gmail.com', '(71) 98465-6549');
+
+        
+INSERT INTO disciplinas (idDisc, Nome_disc, Carga_Horaria, Prof_responsavel)
+VALUES
+('MAT001', 'Matemática Básica', 60, 001),
+('HIS002', 'História Antiga', 45, 002),
+('BIO003', 'Biologia Celular', 75, 003),
+('QUI004', 'Química Orgânica', 90, 004),
+('FIS005', 'Física Moderna', 80, 005);
+
+insert into salas (Nome_da_sala, Capacidade, Localizacao, Recursos_disp)
+values	('Sala 101', 30, 'Prédio Principal, 1º Andar', 'Projetor, Quadro Branco'),
+		('Sala 201', 25, 'Prédio Principal, 2º Andar', 'Quadro Branco, Computador'),
+		('Sala 301', 35, 'Prédio Secundário, 3º Andar', 'Projetor, Quadro Branco'),
+		('Sala 401', 20, 'Prédio Principal, 1º Andar', 'Quadro Branco'),
+		('Sala 501', 40, 'Prédio Principal, 2º Andar', 'Projetor, Quadro Branco, Computador');
+
+INSERT INTO horario_aulas (ID_Prof, idDisc_FK, dia_semana, hora_inicio, hora_fim, Sala_FK)
+VALUES
+(001, 'MAT001', 'Segunda-feira', '08:00:00', '10:00:00', 1), -- João Silva, Matemática Básica, Sala 101
+(002, 'HIS002', 'Terça-feira', '10:00:00', '12:00:00', 2),   -- Maria Santos, História Antiga, Sala 201
+(003, 'BIO003', 'Quarta-feira', '14:00:00', '16:00:00', 3);-- Pedro Oliveira, Biologia Celular, Sala 301
+
+-- Inserindo dados na tabela dispon_prof
+INSERT INTO dispon_prof (ID_Prof, dia_semana, hora_inicio, hora_fim)
+VALUES
+(001, 'Segunda-feira', '10:00:00', '12:00:00'), -- Cleito Rasta, Segunda-feira, 10:00 - 12:00
+(002, 'Quarta-feira', '13:00:00', '15:00:00'),   -- Lucas Macedo, Quarta-feira, 13:00 - 15:00
+(003, 'Sexta-feira', '13:00:00', '15:00:00');   -- Millena Quadros, Sexta-feira, 09:00 - 11:00
+
+
+
+-- Está trigger irá servir para evitar conflitos de horários dos professores
+DELIMITER $$
+create trigger check_horario_prof -- irá checar se há conflito com os horarios das aulas
+before insert on horario_aulas
+for each row
+begin
+    if exists (
+        select 1 -- valor constante, se o valor for retornado, a condição é verdade
+        from horario_aulas
+        where ID_Prof = new.ID_Prof
+        and dia_semana = new.dia_semana
+        and ((new.hora_inicio between hora_inicio and hora_fim)
+             or (new.hora_fim between hora_inicio and hora_fim))
+    ) then
+        signal sqlstate '45000' -- códgo que indica sinal de erro no mysql
+        set message_text = 'Conflito de horário para o professor.';
+    end if;
+end $$
+DELIMITER ;
+
+
+DELIMITER $$
+create trigger check_sala -- irá checar se há conflito com os horarios das aulas
+before insert on horario_aulas
+for each row
+begin
+    if exists (
+        select 1
+        from horario_aulas
+        where Sala_FK = new.Sala_FK
+        and dia_semana = new.dia_semana
+        and ((new.hora_inicio between hora_inicio and hora_fim)
+             or (new.hora_fim between hora_inicio and hora_fim))
+    ) then
+        signal sqlstate '45000' -- códgo que indica sinal de erro no mysql
+        set message_text = 'Sala já está ocupada nesse horário';
+    end if;
+end $$
+DELIMITER ;
+
+
+DELIMITER $$
+create trigger check_formacao -- irá checar se há conflito com a especialidade das aulas
+before insert on disciplinas
+for each row
+begin
+    if exists (
+        select 1
+        from disciplinas
+        where Prof_responsavel = new.Prof_responsavel
+        and Nome_disc = new.Nome_disc
+    ) then
+        signal sqlstate '45000' -- códgo que indica sinal de erro no mysql
+        set message_text = 'Professor já é formado nessa especialidade';
+    end if;
+end $$
+DELIMITER ;
+
+-- procedure para adicionar disponibilidade do professor
+DELIMITER $$
+create procedure add_disponibilida_Prof(
+	in ID_Prof INT,
+    in dia_semana VARCHAR(15),
+    in hora_inicio TIME,
+    in hora_fim TIME)
+	begin 
+		insert into dispon_prof (ID_Prof, dia_semana, hora_inicio, hora_fim)
+        values (ID_Prof, dia_semana, hora_inicio, hora_fim);
+	end $$
+    DELIMITER ;
+    
+    
+    call add_disponibilida_Prof (001, "Segunda-feira", "10:00:00", "13:00:00");
+    
+    select * from dispon_prof;
+    
+    
+DELIMITER $$
+create procedure add_horario_aulas(
+	in ID_Prof INT,
+    in idDisc_FK varchar (6),
+    in dia_semana varchar (15),
+    in hora_inicio TIME,
+	in hora_fim TIME,
+    in Sala_FK int)
+    
+	begin 
+		insert into horario_aulas (ID_Prof, idDisc_FK, dia_semana, hora_inicio, hora_fim, Sala_FK)
+        values (ID_Prof, idDisc_FK, dia_semana, hora_inicio, hora_fim, Sala_FK);
+	end $$
+    DELIMITER ;
+    -- drop procedure add_horario_aulas;
+    
+    call add_horario_aulas (002, 'MAT001', 'Quinta-feira', '09:00:00', '10:00:00', 1);
+    
+    select * from horario_aulas;
+    -- select * from horario_aulas where dia_semana = "Quinta-feira" and "Segunda-feira";
+
+
+---------------------------------------------
+-- Us/As views
+
+create view vwprofessores as
+select ID_Prof as Código_Professor,
+	nome as Nome_Professor,
+    especialidade as Especialidade_Professor,
+    Email,
+    Telefone 
+from professores;
+
+select * from vwprofessores;
+
+create view vwsalas as
+select  ID_Sala,
+    Nome_da_sala,
+    Capacidade,
+    Localizacao,
+	Recursos_disp as Recursos_Disponiveis
+from salas;
+
+select * from vwsalas;
+
+create view vwdisciplinas as
+select 
+	idDisc as Código_Disciplina,
+	Nome_disc as Nome_Disciplina,
+	Carga_Horaria,
+	Prof_responsavel
+from disciplinas;
+
+select * from vwdisciplinas;
+
+
+create view vwdispon_prof as
+select 
+	ID_Disp_Prof as Id_Disponibilidade,
+    ID_Prof as Nome_Professor,
+    dia_semana,
+    hora_inicio,
+    hora_fim
+from dispon_prof;
+
+select * from vwdispon_prof;
+
+create view vwhorario_aulas as
+select 
+	ID_Prof as Id_Professor,
+    idDisc_FK as Id_Disciplina,
+    dia_semana,
+    hora_inicio,
+    hora_fim,
+    Sala_FK as Id_Sala
+from horario_aulas;
+
+select * from vwhorario_aulas;
+    
+
+
+------------------------------------------
+
+
+-- Dia da semana que Cleito Rasta da aula.
+select ID_Prof, dia_semana, hora_inicio, hora_fim 
+from horario_aulas 
+where ID_Prof = 001;
+
+-- view dus Profeso
+select * from vwprofessores;
+
+-- view das sala
+select * from vwsalas;
+
+-- View das dissiplinas
+select * from vwdisciplinas;
+
+-- disponibilidade dos proff
+select * from dispon_prof;
+
+-- View dus disponibilidades dus profes max in view
+select * from vwdispon_prof;
+
+-- mounstar os horarios da aula
+select * from horario_aulas;
+
+-- view horario aulas
+select * from vwhorario_aulas;
+
+
+
+
+
+ -- disponibilidade dos proff
+-- select * from dispon_prof;
+-- disponibilidade dos proff mas em view
+-- select * from vwdispon_prof;
