@@ -52,6 +52,7 @@ if ($result->rowCount() > 0) {
         </tr>
     </thead>
     <tbody>
+        <!--bagulhos de confirmacao -->
         <?php if ($usuarios !== null) : ?>
             <?php foreach ($usuarios as $usuario) : ?>
                 <tr>
@@ -71,6 +72,11 @@ if ($result->rowCount() > 0) {
     </tbody>
 </table>
         </div>
+            <!--botao di voltar -->
+        <div class="text-center mt-4">
+            <a href="Cadastro.php" class="btn btn-primary"><i class="fa-solid fa-backward"></i>Voltar para Cadastro</a>
+        </div>
+
     </div>
     <!--bootstrap JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
