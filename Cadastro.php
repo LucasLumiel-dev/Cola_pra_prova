@@ -15,12 +15,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $nome = $_POST['nome'];
     $email = $_POST['email'];
     $senha = $_POST['senha']; // Captura a senha
+    $confirmar_senha = $_POST['confirmar_senha']; // Captura a confirmação da senha
     $tipo = $_POST['tipo']; // Captura o tipo de usuário
+
+    // Verifica se as senhas são iguais
+    if ($senha !== $confirmar_senha) {
+        echo "<script>alert('As senhas não coincidem.');</script>";
+        exit; // Encerra o script se as senhas não coincidirem
+    }
 
     // Inserir no banco de dados
     $sql = "INSERT INTO usuario (nome, senha, email, tipo) VALUES (?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssss", $nome, $senha, $email, $tipo);
+    $hashedPassword = password_hash($senha, PASSWORD_DEFAULT);
+    $stmt->bind_param("ssss", $nome, $hashedPassword, $email, $tipo);
 
     if ($stmt->execute()) {
         echo "<script>alert('Cadastro realizado com sucesso!');</script>";
@@ -74,10 +82,14 @@ $conn->close();
                 <label for="senha" class="form-label">Senha</label>
                 <input type="password" class="form-control" name="senha" required>
             </div>
+            <div class="mb-3">
+                <label for="confirmar_senha" class="form-label">Confirmar Senha</label>
+                <input type="password" class="form-control" name="confirmar_senha" required>
+            </div>
             <button type="submit" class="btn btn-primary">Cadastrar</button>
             <button type="reset" class="btn btn-secondary">Limpar</button>
         </form>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-</html>           
+</html>

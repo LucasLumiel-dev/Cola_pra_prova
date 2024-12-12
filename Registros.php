@@ -29,10 +29,6 @@ if ($result->rowCount() > 0) {
         .table {
             background-color: rgba(255, 255, 255, 0.8); /* Fundo branco semi-transparente para a tabela */
             border-radius: 10px; /* Bordas arredondadas */
-        }
-        .table {
-            background-color: rgba(255, 255, 255, 0.8); /* Fundo branco semi-transparente para a tabela */
-            border-radius: 10px; /* Bordas arredondadas */
             margin: 0 auto;
         }
         td, th {
