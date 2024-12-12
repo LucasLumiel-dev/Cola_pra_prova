@@ -41,13 +41,8 @@ $conn->close();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastro</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
     <style>
-        body {
-            background-image: url('https://www.youbilingue.com.br/blog/wp-content/uploads/2019/06/capa-blog-diferenciar-escola-min.png'); /* Substitua pelo caminho da sua imagem */
-            background-size: cover; /* Faz a imagem cobrir todo o fundo */
-            background-position: center; /* Centraliza a imagem */
-            background-repeat: no-repeat; /* Não repete a imagem */
-        }
         .form-container {
             background-color: rgba(255, 255, 255, 0.8); /* Fundo branco semi-transparente para o formulário */
             border-radius: 10px; /* Bordas arredondadas */

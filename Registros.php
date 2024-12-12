@@ -1,41 +1,19 @@
 <?php
-// Conexão com o banco de dados
-$servername = "localhost"; // ou o endereço do seu servidor
-$username = "root"; // seu usuário do banco de dados
-$password = "cimatec"; // sua senha do banco de dados
-$dbname = "colegio_positivo"; // nome do seu banco de dados
+ require "conexao.php"; ////////
 
-// Criar conexão
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// Verificar conexão
-if ($conn->connect_error) {
-    die("Conexão falhou: " . $conn->connect_error);
-}
-
-// Consulta SQL
 $sql = "SELECT id, nome, email, tipo FROM usuario";
-$result = $conn->query($sql);
+$result = $pdo->query($sql);
+$result->execute();
 
-// Verifique se a consulta foi bem-sucedida
-if ($result === false) {
-    die("Erro na consulta: " . $conn->error);
-}
-
-// Verificar se há resultados e exibir na tabela
-if ($result->num_rows > 0) {
-    // Saída de cada linha
-    while($row = $result->fetch_assoc()) {
-        echo "<tr>
-                <th scope='row'>" . $row["id"] . "</th>
-                <td>" . $row["nome"] . "</td>
-                <td>" . $row["email"] . "</td>
-                <td>" . $row["tipo"] . "</td>
-              </tr>";
-    }
+// Verificar se há resultados
+if ($result->rowCount() > 0) {
+    $usuarios = $result->fetchAll(pdo::FETCH_ASSOC);
 } else {
-    echo "<tr><td colspan='4' class='text-center'>Nenhum registro encontrado</td></tr>";
+    $usuarios = null;
 }
+
+// Fechar conexão
+
 ?>
 
 <!DOCTYPE html>
@@ -46,13 +24,8 @@ if ($result->num_rows > 0) {
     <title>Registros</title>
     <!--bootstrap css -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="style.css">
     <style>
-        body {
-            background-image: url('caminho/para/sua/imagem.jpg'); /* Substitua pelo caminho da sua imagem */
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-        }
         .table {
             background-color: rgba(255, 255, 255, 0.8); /* Fundo branco semi-transparente para a tabela */
             border-radius: 10px; /* Bordas arredondadas */
@@ -81,22 +54,18 @@ if ($result->num_rows > 0) {
         </tr>
     </thead>
     <tbody>
-        <?php
-        // Verificar se há resultados e exibir na tabela
-        if ($result->num_rows > 0) {
-            // Saída de cada linha
-            while($row = $result->fetch_assoc()) {
-                echo "<tr>
-                        <th scope='row'>" . $row["id"] . "</th>
-                        <td>" . $row["nome"] . "</td>
-                        <td>" . $row["email"] . "</td>
-                        <td>" . $row["tipo"] . "</td>
-                      </tr>";
-            }
-        } else {
-            echo "<tr><td colspan='4' class='text-center'>Nenhum registro encontrado</td></tr>";
-        }
-        ?>
+        <?php if ($usuarios !== null) : ?>
+            <?php foreach ($usuarios as $usuario) : ?>
+                <tr>
+                    <th scope='row'><?= $usuario['id'] ?></th>
+                    <td><?= $usuario['nome'] ?></td>
+                    <td><?= $usuario['email'] ?></td>
+                    <td><?= $usuario['tipo'] ?></td>
+                </tr>
+            <?php endforeach; ?>
+        <?php else : ?>
+            <tr><td colspan='4' class='text-center'>Nenhum registro encontrado</td></tr>
+        <?php endif; ?>
     </tbody>
 </table>
         </div>
